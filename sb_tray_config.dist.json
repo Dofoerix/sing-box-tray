@@ -1,0 +1,9 @@
+{
+  "sing_box_path": "./sing-box.exe",
+  "sing_box_config_path": "./config.json",
+  "sing_box_workdir": "",
+  "clash_dashboard_url": "http://localhost:9090",
+  "icon_on_rgba": [205, 253, 95, 0],
+  "icon_off_rgba": [255, 255, 255, 0],
+  "keybind": "Win+Shift+X"
+}
