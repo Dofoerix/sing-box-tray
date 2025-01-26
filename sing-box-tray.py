@@ -36,7 +36,7 @@ class SingBoxTray:
             icon=icon_off,
             title='sing-box [Off]',
             menu=Menu(
-                MenuItem('Toggle', self._change_running, checked=lambda _: self.running, default=True),
+                MenuItem('Toggle', self._toggle, checked=lambda _: self.running, default=True),
                 MenuItem('Open clash dashboard', lambda: subprocess.run(['start', clash_url], shell=True)),
                 MenuItem('Open working directory', lambda: subprocess.run(['start', workdir], shell=True)),
                 MenuItem('Exit', self.close)
@@ -64,32 +64,32 @@ class SingBoxTray:
             self.kb_lock = keyboard._Event()
             remove = keyboard.add_hotkey(self.keybind, lambda: self.kb_lock.set())
             self.kb_lock.wait()
-            self._change_running()
             if self.exited:
                 break
             keyboard.remove_hotkey(remove)
+            self._toggle()
 
     def start(self):
         self.start_icon()
         self.wait_kb()
 
     def close(self):
-        self.exited = True
         if hasattr(self, 'proc'):
             self.proc.terminate()
             self.proc.wait()
-            if self.proc.returncode:
-                self.icon.stop()
-            else:
-                self.icon.notify('sing-box wasn\'t closed', 'Error')
+            if self.proc.returncode is None:
+                self.icon.notify('sing-box wasn\'t turned off', 'Error')
+                return
+        self.icon.stop()
+        self.exited = True
         if hasattr(self, 'kb_lock'):
             self.kb_lock.set()
 
-    def _change_running(self):
+    def _toggle(self):
         if self.running:
             self.proc.terminate()
             self.proc.wait()
-            if not self.proc.returncode:
+            if self.proc.returncode is None:
                 self.icon.notify('sing-box wasn\'t turned off', 'Error')
                 return
             self.icon.title = 'sing-box [Off]'
