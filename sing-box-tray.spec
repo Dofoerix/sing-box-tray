@@ -5,7 +5,7 @@ a = Analysis(
     ['sing-box-tray.py'],
     pathex=[],
     binaries=[],
-    datas=[('icon_base.png', '.')],
+    datas=[('icon_base.png', '.'), ('sb_tray_config.dist.json', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

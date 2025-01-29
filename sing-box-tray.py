@@ -1,9 +1,11 @@
+import os
+import sys
 import ctypes
+import shutil
+import pathlib
 import json
 import subprocess
 from threading import Thread
-import pathlib
-import sys
 
 from pystray import Icon, Menu, MenuItem
 from PIL import Image
@@ -15,7 +17,8 @@ class SingBoxTray:
         self,
         sb_path: str,
         sb_config_path: str,
-        workdir: str,
+        sbt_config_path: str,
+        sb_workdir: str,
         clash_url: str,
         icon_on: Image.Image,
         icon_off: Image.Image,
@@ -23,7 +26,8 @@ class SingBoxTray:
     ):
         self.sb_path = sb_path
         self.sb_config_path = sb_config_path
-        self.workdir = workdir
+        self.sbt_config_path = sbt_config_path
+        self.sb_workdir = sb_workdir
         self.clash_url = clash_url
         self.icon_on = icon_on
         self.icon_off = icon_off
@@ -37,8 +41,9 @@ class SingBoxTray:
             title='sing-box [Off]',
             menu=Menu(
                 MenuItem('Toggle', self._toggle, checked=lambda _: self.running, default=True),
-                MenuItem('Open clash dashboard', lambda: subprocess.run(['start', clash_url], shell=True)),
-                MenuItem('Open working directory', lambda: subprocess.run(['start', workdir], shell=True)),
+                MenuItem('Open clash dashboard', lambda: os.startfile(clash_url)),
+                MenuItem('Open working directory', lambda: os.startfile(sb_workdir)),
+                MenuItem('Open sing-box-tray settings', lambda: os.startfile(sbt_config_path)),
                 MenuItem('Exit', self.close)
             )
         )
@@ -52,7 +57,7 @@ class SingBoxTray:
 
     def start_sb(self):
         self.proc = subprocess.Popen(
-            [self.sb_path, 'run', '-c', self.sb_config_path, '-D', self.workdir],
+            [self.sb_path, 'run', '-c', self.sb_config_path, '-D', self.sb_workdir],
             stdin=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
             startupinfo=self.si
@@ -119,18 +124,25 @@ if __name__ == '__main__':
     if not ctypes.windll.shell32.IsUserAnAdmin():
         raise PermissionError('Run the program with administrator privileges')
 
-    if getattr(sys, 'frozen', False):
+    file_dir = pathlib.Path(__file__).parent.resolve()
+
+    if getattr(sys, 'frozen', False):  # If bundled to .exe
         workdir = pathlib.Path(sys.executable).parent.resolve()
     else:
-        workdir = pathlib.Path(__file__).parent.resolve()
+        workdir = file_dir
 
-    with open(workdir.joinpath('sb_tray_config.json'), 'r') as file:
-        cfg = json.load(file)
+    try:
+        with open(workdir.joinpath('sb_tray_config.json'), 'r') as file:
+            cfg = json.load(file)
+    except FileNotFoundError:
+        shutil.copy(file_dir.joinpath('sb_tray_config.dist.json'), workdir.joinpath('sb_tray_config.json'))
+        raise FileNotFoundError(f'Fill the values in configuration file ({workdir.joinpath('sb_tray_config.json')})')
 
-    icon = Image.open(pathlib.Path(__file__).parent.joinpath('icon_base.png'))
+    icon = Image.open(file_dir.joinpath('icon_base.png'))
     sb_tray = SingBoxTray(
         cfg['sing_box_path'],
         cfg['sing_box_config_path'],
+        workdir.joinpath('sb_tray_config.json'),
         cfg['sing_box_workdir'],
         cfg['clash_dashboard_url'],
         adjust_icon(icon, cfg['icon_on_rgba']),

@@ -4,3 +4,4 @@ venv
 *.png
 !icon_base.png
 sb_tray_config.json
+.vscode
