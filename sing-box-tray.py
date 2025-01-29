@@ -25,9 +25,12 @@ class SingBox:
         self.config_path = config_path
         self.workdir = workdir
 
-    # To not show the window
-    si = subprocess.STARTUPINFO()
-    si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    # To not show the window on Windows
+    if os.name == 'nt':
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    else:
+        si = None
 
     def start(self) -> int | None:
         self.proc = subprocess.Popen(
@@ -66,9 +69,9 @@ class TrayIcon:
             title='sing-box [Off]',
             menu=Menu(
                 MenuItem('Toggle', on_toggle, checked=lambda _: self._sb_running, default=True),
-                MenuItem('Open clash dashboard', lambda: os.startfile(clash_url)),
-                MenuItem('Open working directory', lambda: os.startfile(sb_workdir)),
-                MenuItem('Open sing-box-tray settings', lambda: os.startfile(sbt_config_path)),
+                MenuItem('Open clash dashboard', lambda: open_path(clash_url)),
+                MenuItem('Open working directory', lambda: open_path(sb_workdir)),
+                MenuItem('Open sing-box-tray settings', lambda: open_path(sbt_config_path)),
                 MenuItem('Exit', on_exit)
             )
         )
@@ -169,13 +172,24 @@ def adjust_icon(img: Image.Image, rgba: list[int]) -> Image.Image:
 
     return Image.merge("RGBA", (r, g, b, a))
 
+def open_path(path: str) -> None:
+    if os.name == 'nt':
+        os.startfile(path)
+    else:
+        subprocess.run(['open', path])
+
 if __name__ == '__main__':
     # Admin check
-    if not ctypes.windll.shell32.IsUserAnAdmin():
+    try:
+        is_admin = not os.getuid()
+    except AttributeError:
+        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+    if not is_admin:
         raise PermissionError('Run the program with administrator privileges')
 
+    # Workdir
     file_dir = pathlib.Path(__file__).parent.resolve()
-    if getattr(sys, 'frozen', False):  # If bundled to .exe
+    if getattr(sys, 'frozen', False):  # If bundled with pyinstaller
         workdir = pathlib.Path(sys.executable).parent.resolve()
     else:
         workdir = file_dir

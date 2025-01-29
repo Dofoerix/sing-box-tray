@@ -1,3 +1,3 @@
-This program works only on Windows with administrator priveleges.
+This program works only with administrator priveleges.
 
-It is recommended to bundle it to .exe using pyinstaller: `pwsh bundle_to_exe.ps1` or `pyinstaller sing-box-tray.spec`
+It is recommended to bundle it executable using pyinstaller: `pwsh build.ps1` or `pyinstaller sing-box-tray.spec`
