@@ -202,7 +202,10 @@ if __name__ == '__main__':
             cfg = json.load(file)
     except FileNotFoundError:
         shutil.copy(file_dir.joinpath('sb_tray_config.dist.json'), workdir.joinpath('sb_tray_config.json'))
-        raise FileNotFoundError(f'Fill the values in configuration file ({workdir.joinpath('sb_tray_config.json')})')
+        raise FileNotFoundError(
+            f'Configuration file ({workdir.joinpath('sb_tray_config.json')}) was created. Check it and then run the '
+            'program again.'
+        )
 
     if not cfg['sing_box_path']:
         cfg['sing_box_path'] = 'sing-box'
