@@ -12,7 +12,7 @@ A Python script that adds a tray icon for [sing-box](https://github.com/SagerNet
 - Customizable icon (for both the on and off states)
 - Supports Windows, MacOS and Linux[^1]
 
-[^1]: Hasn't been tested on Linux and MacOS but it shoul probably work.
+[^1]: Hasn't been tested on Linux and MacOS but it should probably work.
 
 ## Usage
 
