@@ -56,10 +56,13 @@ class TrayIcon:
         on_exit: Callable,
         icon_on: Image.Image,
         icon_off: Image.Image,
-        clash_url: str,
+        keybind: str,
+        clash_url: str | None,
         sb_workdir: str,
-        sbt_config_path: str
+        sbt_config_path: str,
     ):
+        keybind = '+'.join([i.capitalize() for i in keybind.split('+')])
+
         self._sb_running = False
         self.icon_on = icon_on
         self.icon_off = icon_off
@@ -68,10 +71,12 @@ class TrayIcon:
             icon=icon_off,
             title='sing-box [Off]',
             menu=Menu(
-                MenuItem('Toggle', on_toggle, checked=lambda _: self._sb_running, default=True),
-                MenuItem('Open clash dashboard', lambda: open_path(clash_url)),
+                MenuItem(f'Toggle\t{keybind}', on_toggle, checked=lambda _: self._sb_running, default=True, ),
+                Menu.SEPARATOR,
+                MenuItem('Open clash dashboard', lambda: open_path(clash_url), visible=bool(clash_url)),
                 MenuItem('Open working directory', lambda: open_path(sb_workdir)),
                 MenuItem('Open sing-box-tray settings', lambda: open_path(sbt_config_path)),
+                Menu.SEPARATOR,
                 MenuItem('Exit', on_exit)
             )
         )
@@ -90,6 +95,7 @@ class TrayIcon:
             self.icon.icon = self.icon_on
             self.icon.title = 'sing-box [On]'
         self._sb_running = not self._sb_running
+        self.icon.update_menu()
 
 
 class Keyboard:
@@ -132,7 +138,8 @@ class SingBoxTray:
         self.sb_running = False
 
         self.sb = SingBox(sb_path, sb_config_path, sb_workdir)
-        self.icon = TrayIcon(self._toggle, self.stop, icon_on, icon_off, clash_url, sb_workdir, sbt_config_path)
+        self.icon = TrayIcon(self._toggle, self.stop, icon_on, icon_off, keybind, clash_url, sb_workdir,
+                             sbt_config_path)
         self.kb = Keyboard(keybind, self._toggle)
 
     def start(self):
@@ -201,6 +208,16 @@ if __name__ == '__main__':
     except FileNotFoundError:
         shutil.copy(file_dir.joinpath('sb_tray_config.dist.json'), workdir.joinpath('sb_tray_config.json'))
         raise FileNotFoundError(f'Fill the values in configuration file ({workdir.joinpath('sb_tray_config.json')})')
+
+    if not cfg['sing_box_path']:
+        cfg['sing_box_path'] = 'sing-box'
+    if not cfg['sing_box_config_path']:
+        cfg['sing_box_config_path'] = workdir.joinpath('config.json')
+    if not cfg['sing_box_workdir']:
+        sb_workdir_path = workdir.joinpath('sb_workdir')
+        cfg['sing_box_workdir'] = sb_workdir_path
+        if not os.path.exists(sb_workdir_path):
+            os.mkdir(sb_workdir_path)
 
     icon_base = Image.open(file_dir.joinpath('icon_base.png'))
     sb_tray = SingBoxTray(
