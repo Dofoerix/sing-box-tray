@@ -1,6 +1,5 @@
 import os
 import sys
-import ctypes
 import shutil
 import pathlib
 import json
@@ -61,7 +60,7 @@ class TrayIcon:
         sb_workdir: str,
         sbt_config_path: str,
     ):
-        keybind = '+'.join([i.capitalize() for i in keybind.split('+')])
+        keybind = '+'.join([i.capitalize() for i in keybind.split('+')]) if keybind else None
 
         self._sb_running = False
         self.icon_on = icon_on
@@ -82,7 +81,7 @@ class TrayIcon:
         )
 
     def start(self):
-        Thread(target=self.icon.run).start()
+        self.icon.run()
 
     def stop(self):
         self.icon.stop()
@@ -130,21 +129,24 @@ class SingBoxTray:
         sb_path: str,
         sb_config_path: str,
         sb_workdir: str,
-        clash_url: str,
+        clash_url: str | None,
         icon_on: Image.Image,
         icon_off: Image.Image,
-        keybind: str
+        keybind: str | None
     ):
         self.sb_running = False
 
         self.sb = SingBox(sb_path, sb_config_path, sb_workdir)
         self.icon = TrayIcon(self._toggle, self.stop, icon_on, icon_off, keybind, clash_url, sb_workdir,
                              sbt_config_path)
-        self.kb = Keyboard(keybind, self._toggle)
+        self.kb = Keyboard(keybind, self._toggle) if keybind else None
 
     def start(self):
-        self.icon.start()
-        self.kb.start()
+        if self.kb:
+            Thread(target=self.icon.start).start()
+            self.kb.start()
+        else:
+            self.icon.start()
 
     def stop(self):
         code = self.sb.stop()
@@ -152,7 +154,8 @@ class SingBoxTray:
             self.icon.icon.notify('sing-box wasn\'t turned off', 'Error')
             return
         self.icon.stop()
-        self.kb.stop()
+        if self.kb:
+            self.kb.stop()
 
     def _toggle(self):
         if self.sb_running:
@@ -186,14 +189,6 @@ def open_path(path: str) -> None:
         subprocess.run(['open', path])
 
 if __name__ == '__main__':
-    # Admin check
-    try:
-        is_admin = not os.getuid()
-    except AttributeError:
-        is_admin = ctypes.windll.shell32.IsUserAnAdmin()
-    if not is_admin:
-        raise PermissionError('Run the program with administrator privileges')
-
     # Workdir
     file_dir = pathlib.Path(__file__).parent.resolve()
     if getattr(sys, 'frozen', False):  # If bundled with pyinstaller
