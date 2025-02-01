@@ -63,8 +63,8 @@ Then you can run the file in `dist` directory.
 All settings are stored in the `sb_tray_config.json` file in the same directory as the program.
 
 - `sing_box_path` - the path to the sing-box executable. If its value is `sing-box` or an empty string, sing-box must be in the PATH variable
-- `sing_box_config_path` - the path to the sing-box configuration file. `<folder with sb-tray>/config.json` if left empty
-- `sing_box_workdir` - the path to sing-box working directory. `<folder with sb-tray>/sb_workdir/` if left empty
+- `sing_box_config_path` - the path to the sing-box configuration file. `<sb-tray-dir>/config.json` if left empty
+- `sing_box_workdir` - the path to sing-box working directory. `<sb-tray-dir>/sb_workdir/` if left empty
 - `clash_dashboard_url` - the URL of your Clash dashboard. The button in the menu won't show up if left empty
 - `icon_on_rgba` - the RGBA color for the turned-on icon
 - `icon_off_rgba` - the RGBA color for the turned-off icon

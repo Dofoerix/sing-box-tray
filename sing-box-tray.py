@@ -104,22 +104,22 @@ class Keyboard:
         on_press: Callable
     ):
         self.running = False
-        self.kb_lock = None
+        self.lock = None
         self.callback = on_press
-        keyboard.add_hotkey(keybind, lambda: self.kb_lock.set())
+        keyboard.add_hotkey(keybind, lambda: self.lock.set())
 
     def start(self):
         self.running = True
         # Part of keyboard.wait()
         while self.running:
-            self.kb_lock = keyboard._Event()
-            self.kb_lock.wait()
+            self.lock = keyboard._Event()
+            self.lock.wait()
             self.callback()
 
     def stop(self):
         self.running = False
-        if self.kb_lock:
-            self.kb_lock.set()
+        if self.lock:
+            self.lock.set()
 
 
 class SingBoxTray:
@@ -203,7 +203,7 @@ if __name__ == '__main__':
     except FileNotFoundError:
         shutil.copy(file_dir.joinpath('sb_tray_config.dist.json'), workdir.joinpath('sb_tray_config.json'))
         raise FileNotFoundError(
-            f'Configuration file ({workdir.joinpath('sb_tray_config.json')}) was created. Check it and then run the '
+            f'Configuration file ({workdir.joinpath("sb_tray_config.json")}) was created. Check it and then run the '
             'program again.'
         )
 
