@@ -4,6 +4,7 @@ import shutil
 import pathlib
 import json
 import subprocess
+import time
 from threading import Thread
 from typing import Callable
 
@@ -108,8 +109,24 @@ class Keyboard:
         self.callback = on_press
         keyboard.add_hotkey(keybind, lambda: self.lock.set())
 
+    def _clear_keys(self):
+        """
+        Fixes key jamming after locking Windows and in some other scenarios. Clears the dict of pressed keys every
+        ~5 seconds (with the side effect that the user can't hold a hotkey for too long).
+
+        It's a keyboard library issue: https://github.com/boppreh/keyboard/issues/223
+        """
+        while self.running:
+            with keyboard._pressed_events_lock:
+                for k in list(keyboard._pressed_events.keys()):
+                    item = keyboard._pressed_events[k]
+                    if time.time() - item.time > 5:
+                        del keyboard._pressed_events[k]
+            time.sleep(1)
+
     def start(self):
         self.running = True
+        Thread(target=self._clear_keys).start()
         # Part of keyboard.wait()
         while self.running:
             self.lock = keyboard._Event()
