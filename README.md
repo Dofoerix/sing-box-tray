@@ -69,3 +69,4 @@ All settings are stored in the `sb_tray_config.json` file in the same directory 
 - `icon_on_rgba` - the RGBA color for the turned-on icon
 - `icon_off_rgba` - the RGBA color for the turned-off icon
 - `keybind` - the keyboard shortcut to turn it on/off (example: `ctrl+win+x`). There will be no shortcut if left empty
+- `default` - if set to `true`, sing-box will be turned on automatically when sing-box-tray starts

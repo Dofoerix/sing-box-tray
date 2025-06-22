@@ -56,8 +56,8 @@ class TrayIcon:
         on_exit: Callable,
         icon_on: Image.Image,
         icon_off: Image.Image,
-        keybind: str,
-        clash_url: str | None,
+        keybind: str | None,
+        clash_url: str,
         sb_workdir: str,
         sbt_config_path: str,
     ):
@@ -105,7 +105,6 @@ class Keyboard:
         on_press: Callable
     ):
         self.running = False
-        self.lock = None
         self.callback = on_press
         keyboard.add_hotkey(keybind, lambda: self.lock.set())
 
@@ -117,11 +116,11 @@ class Keyboard:
         It's a keyboard library issue: https://github.com/boppreh/keyboard/issues/223
         """
         while self.running:
-            with keyboard._pressed_events_lock:
-                for k in list(keyboard._pressed_events.keys()):
-                    item = keyboard._pressed_events[k]
+            with keyboard._pressed_events_lock:  # type: ignore
+                for k in list(keyboard._pressed_events.keys()):  # type: ignore
+                    item = keyboard._pressed_events[k]  # type: ignore
                     if time.time() - item.time > 5:
-                        del keyboard._pressed_events[k]
+                        del keyboard._pressed_events[k]  # type: ignore
             time.sleep(1)
 
     def start(self):
@@ -146,10 +145,11 @@ class SingBoxTray:
         sb_path: str,
         sb_config_path: str,
         sb_workdir: str,
-        clash_url: str | None,
+        clash_url: str,
         icon_on: Image.Image,
         icon_off: Image.Image,
-        keybind: str | None
+        keybind: str | None,
+        default: bool
     ):
         self.sb_running = False
 
@@ -157,6 +157,9 @@ class SingBoxTray:
         self.icon = TrayIcon(self._toggle, self.stop, icon_on, icon_off, keybind, clash_url, sb_workdir,
                              sbt_config_path)
         self.kb = Keyboard(keybind, self._toggle) if keybind else None
+
+        if default:
+            self._toggle()
 
     def start(self):
         if self.kb:
@@ -236,13 +239,14 @@ if __name__ == '__main__':
 
     icon_base = Image.open(file_dir.joinpath('icon_base.png'))
     sb_tray = SingBoxTray(
-        workdir.joinpath('sb_tray_config.json'),
+        str(workdir.joinpath('sb_tray_config.json')),
         cfg['sing_box_path'],
         cfg['sing_box_config_path'],
         cfg['sing_box_workdir'],
         cfg['clash_dashboard_url'],
         adjust_icon(icon_base, cfg['icon_on_rgba']),
         adjust_icon(icon_base, cfg['icon_off_rgba']),
-        cfg['keybind']
+        cfg['keybind'],
+        cfg['default']
     )
     sb_tray.start()
